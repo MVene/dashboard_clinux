@@ -1,0 +1,14 @@
+# Respaldo privado y credenciales: NUNCA subir a GitHub
+*.sql
+*.sql.gz
+*.dump
+*.bak
+*.csv
+.env
+.env.*
+rclone.conf
+*.key
+*.pem
+__pycache__/
+.pytest_cache/
+.venv/
