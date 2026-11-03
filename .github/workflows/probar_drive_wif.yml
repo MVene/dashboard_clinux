@@ -13,6 +13,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Diagnosticar identidad de GitHub
+        run: |
+          echo "Repositorio: $GITHUB_REPOSITORY"
+          echo "Rama: $GITHUB_REF"
 
       - name: Autenticar Google Cloud
         uses: google-github-actions/auth@v3
