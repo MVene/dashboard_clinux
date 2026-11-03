@@ -3,7 +3,7 @@
     {
       "name": "DS_CLINUX",
       "label": "PostgreSQL Clinux",
-      "description": "Seleccioná el datasource PostgreSQL conectado a la base en la nube",
+      "description": "Seleccioná la fuente de datos PostgreSQL de Clinux",
       "type": "datasource",
       "pluginId": "postgres",
       "pluginName": "PostgreSQL"
@@ -24,18 +24,18 @@
     }
   ],
   "id": null,
-  "uid": "clinux-gerencia-v3",
-  "title": "Clinux | Gerencia: ventas y mayoristas (v3)",
-  "description": "Panel gerencial sobre respaldo SQL de Nacional Sistema procesado por GitHub Actions; importes nominales en ARS, ganancias parciales.",
+  "uid": "clinux-rendimiento-v4",
+  "title": "Clinux | Crecimiento y rendimiento comercial (v4)",
+  "description": "Panel comercial de Clinux. Ventas nominales en ARS y ganancias registradas parciales, NO ganancias netas.",
   "tags": [
     "clinux",
+    "gerencia",
     "ventas",
-    "mayoristas",
-    "stock"
+    "rendimiento"
   ],
   "timezone": "America/Argentina/Cordoba",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 4,
   "refresh": "1h",
   "time": {
     "from": "now-180d",
@@ -43,16 +43,16 @@
   },
   "timepicker": {
     "refresh_intervals": [
-      "5m",
       "15m",
-      "1h"
+      "1h",
+      "6h"
     ]
   },
   "templating": {
     "list": [
       {
         "name": "DS_CLINUX",
-        "label": "PostgreSQL Clinux",
+        "label": "Base de datos Clinux",
         "type": "datasource",
         "query": "postgres",
         "current": {
@@ -70,210 +70,15 @@
   "panels": [
     {
       "id": 1,
-      "title": "Ventas del período",
+      "title": "Ventas mayoristas · período",
       "type": "stat",
       "gridPos": {
         "x": 0,
         "y": 0,
-        "w": 6,
-        "h": 4
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CLINUX}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CLINUX}"
-          },
-          "rawSql": "SELECT SUM(ventas) AS \"Ventas\" FROM clinux_ventas_diarias WHERE $__timeFilter(dia::timestamp)",
-          "format": "table",
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {},
-          "unit": "currency:financial:$",
-          "decimals": 0
-        },
-        "overrides": []
-      },
-      "options": {},
-      "description": "Ventas netas del período seleccionado, incluyendo notas de crédito. $ARS nominales."
-    },
-    {
-      "id": 2,
-      "title": "Ganancia registrada (parcial)",
-      "type": "stat",
-      "gridPos": {
-        "x": 6,
-        "y": 0,
-        "w": 6,
-        "h": 4
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CLINUX}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CLINUX}"
-          },
-          "rawSql": "SELECT SUM(ganancia_registrada) AS \"Ganancia registrada\" FROM clinux_ventas_diarias WHERE $__timeFilter(dia::timestamp)",
-          "format": "table",
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {},
-          "unit": "currency:financial:$",
-          "decimals": 0
-        },
-        "overrides": []
-      },
-      "options": {},
-      "description": "Ganancia registrada por Nacional Sistema; NO incluye necesariamente todos los costos ni gastos y NO es ganancia neta."
-    },
-    {
-      "id": 3,
-      "title": "Tickets de venta del período",
-      "type": "stat",
-      "gridPos": {
-        "x": 12,
-        "y": 0,
-        "w": 6,
-        "h": 4
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CLINUX}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CLINUX}"
-          },
-          "rawSql": "SELECT SUM(comprobantes) AS \"Comprobantes\" FROM clinux_ventas_diarias WHERE $__timeFilter(dia::timestamp)",
-          "format": "table",
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {},
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "options": {}
-    },
-    {
-      "id": 4,
-      "title": "Crecimiento último mes vs anterior*",
-      "type": "stat",
-      "gridPos": {
-        "x": 18,
-        "y": 0,
-        "w": 6,
-        "h": 4
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CLINUX}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CLINUX}"
-          },
-          "rawSql": "SELECT crecimiento_pct AS \"Crecimiento mensual\" FROM clinux_resumen LIMIT 1",
-          "format": "table",
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {},
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "options": {},
-      "description": "Último mes con datos hasta el mismo día del mes anterior. Este indicador no depende del filtro de fechas."
-    },
-    {
-      "id": 5,
-      "title": "Ventas diarias",
-      "type": "timeseries",
-      "gridPos": {
-        "x": 0,
-        "y": 4,
-        "w": 16,
-        "h": 9
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CLINUX}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CLINUX}"
-          },
-          "rawSql": "SELECT dia::timestamp AS time, ventas AS \"Ventas\" FROM clinux_ventas_diarias WHERE $__timeFilter(dia::timestamp) ORDER BY 1",
-          "format": "time_series",
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {},
-          "unit": "currency:financial:$",
-          "decimals": 0
-        },
-        "overrides": []
-      },
-      "options": {}
-    },
-    {
-      "id": 6,
-      "title": "Participación mayorista vs minorista",
-      "type": "piechart",
-      "gridPos": {
-        "x": 16,
-        "y": 4,
         "w": 8,
-        "h": 9
+        "h": 4
       },
+      "description": "Facturación neta de comprobantes asociados a clientes identificados, incluyendo devoluciones.",
       "datasource": {
         "type": "postgres",
         "uid": "${DS_CLINUX}"
@@ -285,7 +90,7 @@
             "type": "postgres",
             "uid": "${DS_CLINUX}"
           },
-          "rawSql": "SELECT COALESCE(SUM(ventas) FILTER (WHERE mayorista), 0) AS \"Mayoristas\",\n             COALESCE(SUM(ventas) FILTER (WHERE NOT mayorista), 0) AS \"Minoristas\"\n        FROM clinux_clientes_diarios WHERE $__timeFilter(dia::timestamp)",
+          "rawSql": "\nSELECT COALESCE(SUM(ventas), 0) AS \"Total\"\nFROM clinux_clientes_diarios\nWHERE mayorista = TRUE\n  AND $__timeFilter(dia::timestamp)\n",
           "format": "table",
           "editorMode": "code"
         }
@@ -293,83 +98,41 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "#28B9B3"
           },
-          "custom": {}
+          "unit": "currency:financial:$",
+          "custom": {},
+          "decimals": 0
         },
         "overrides": []
       },
       "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "pieType": "donut",
-        "displayLabels": [
-          "name",
-          "percent"
-        ],
         "reduceOptions": {
+          "values": false,
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "",
-          "values": false
-        }
-      },
-      "description": "Mayorista si el comprobante está asociado a un cliente identificado; CF o sin cliente es minorista. FC/FX no deciden por sí solas el canal. Las notas de crédito restan."
-    },
-    {
-      "id": 7,
-      "title": "Evolución mensual de ventas y ganancia registrada",
-      "type": "timeseries",
-      "gridPos": {
-        "x": 0,
-        "y": 13,
-        "w": 12,
-        "h": 9
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CLINUX}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CLINUX}"
-          },
-          "rawSql": "SELECT mes::timestamp AS time, ventas AS \"Ventas\", ganancia_registrada AS \"Ganancia registrada\" FROM clinux_ventas_mensuales WHERE $__timeFilter(mes::timestamp) ORDER BY 1",
-          "format": "time_series",
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {},
-          "unit": "currency:financial:$",
-          "decimals": 0
+          "fields": ""
         },
-        "overrides": []
-      },
-      "options": {},
-      "description": "Ganancia registrada no equivale a ganancia neta."
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
     },
     {
-      "id": 8,
-      "title": "Top 10 productos por unidades",
-      "type": "barchart",
+      "id": 2,
+      "title": "Ventas minoristas · período",
+      "type": "stat",
       "gridPos": {
-        "x": 12,
-        "y": 13,
-        "w": 12,
-        "h": 9
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 4
       },
+      "description": "Facturación neta a Consumidor Final o sin cliente identificado, incluyendo devoluciones.",
       "datasource": {
         "type": "postgres",
         "uid": "${DS_CLINUX}"
@@ -381,7 +144,7 @@
             "type": "postgres",
             "uid": "${DS_CLINUX}"
           },
-          "rawSql": "SELECT producto AS \"Producto\", ROUND(SUM(unidades)::numeric,2) AS \"Unidades\"\n       FROM clinux_productos_diarios WHERE $__timeFilter(dia::timestamp)\n       GROUP BY producto ORDER BY \"Unidades\" DESC LIMIT 10",
+          "rawSql": "\nSELECT COALESCE(SUM(ventas), 0) AS \"Total\"\nFROM clinux_clientes_diarios\nWHERE mayorista = FALSE\n  AND $__timeFilter(dia::timestamp)\n",
           "format": "table",
           "editorMode": "code"
         }
@@ -389,9 +152,478 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "#67A8F4"
           },
+          "unit": "currency:financial:$",
+          "custom": {},
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Tickets totales · período",
+      "type": "stat",
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 4
+      },
+      "description": "Cuenta facturas y tickets; no agrega notas de crédito como tickets nuevos.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_CLINUX}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_CLINUX}"
+          },
+          "rawSql": "SELECT COALESCE(SUM(comprobantes), 0) AS \"Tickets\" FROM clinux_ventas_diarias WHERE $__timeFilter(dia::timestamp)",
+          "format": "table",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#70C788"
+          },
+          "unit": "none",
+          "custom": {},
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Crecimiento vs. período anterior",
+      "type": "stat",
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 8,
+        "h": 4
+      },
+      "description": "Crecimiento de facturación neta contra el intervalo inmediatamente anterior de igual cantidad de días. No equivale necesariamente a crecimiento real por inflación.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_CLINUX}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_CLINUX}"
+          },
+          "rawSql": "\nWITH limites AS (\n    SELECT ($__timeFrom())::date AS desde,\n           ($__timeTo())::date AS hasta\n), totales AS (\n    SELECT\n        SUM(d.ventas) FILTER (\n            WHERE d.dia BETWEEN l.desde AND l.hasta\n        ) AS actual,\n        SUM(d.ventas) FILTER (\n            WHERE d.dia >= l.desde - (l.hasta - l.desde + 1)\n              AND d.dia < l.desde\n        ) AS anterior\n    FROM clinux_ventas_diarias d CROSS JOIN limites l\n)\nSELECT CASE WHEN anterior > 0\n       THEN ROUND((actual - anterior) * 100.0 / anterior, 1)\n       ELSE NULL END AS \"Crecimiento (%)\"\nFROM totales\n",
+          "format": "table",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#70C788"
+          },
+          "unit": "percent",
+          "custom": {},
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Ganancia registrada · mayoristas",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 8,
+        "h": 4
+      },
+      "description": "Dato parcial de ganancia asociado a comprobantes mayoristas. No incluye necesariamente todos los costos ni gastos: NO es ganancia neta.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_CLINUX}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_CLINUX}"
+          },
+          "rawSql": "\nSELECT SUM(ganancia_registrada) AS \"Ganancia registrada\"\nFROM clinux_clientes_diarios\nWHERE mayorista = TRUE\n  AND $__timeFilter(dia::timestamp)\n",
+          "format": "table",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#28B9B3"
+          },
+          "unit": "currency:financial:$",
+          "custom": {},
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Ganancia registrada · minoristas",
+      "type": "stat",
+      "gridPos": {
+        "x": 8,
+        "y": 4,
+        "w": 8,
+        "h": 4
+      },
+      "description": "Dato parcial de ganancia asociado a comprobantes minoristas. No incluye necesariamente todos los costos ni gastos: NO es ganancia neta.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_CLINUX}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_CLINUX}"
+          },
+          "rawSql": "\nSELECT SUM(ganancia_registrada) AS \"Ganancia registrada\"\nFROM clinux_clientes_diarios\nWHERE mayorista = FALSE\n  AND $__timeFilter(dia::timestamp)\n",
+          "format": "table",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#67A8F4"
+          },
+          "unit": "currency:financial:$",
+          "custom": {},
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 7,
+      "title": "Crecimiento y rendimiento · evolución mensual",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 9
+      },
+      "description": "Ventas y ganancia registrada por mes, sumando únicamente los días incluidos en el período seleccionado. Los meses extremos pueden ser parciales.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_CLINUX}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_CLINUX}"
+          },
+          "rawSql": "\nSELECT date_trunc('month', dia::timestamp) AS time,\n       SUM(ventas)::double precision AS \"Ventas\",\n       SUM(ganancia_registrada)::double precision AS \"Ganancia registrada\"\nFROM clinux_ventas_diarias\nWHERE $__timeFilter(dia::timestamp)\nGROUP BY 1 ORDER BY 1\n",
+          "format": "time_series",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#28B9B3"
+          },
+          "unit": "currency:financial:$",
+          "custom": {},
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ventas"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#28B9B3"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ganancia registrada"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#70C788"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Ventas diarias",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 24,
+        "h": 9
+      },
+      "description": "Ventas netas por día para el período seleccionado. El origen es el último respaldo disponible en Google Drive.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_CLINUX}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_CLINUX}"
+          },
+          "rawSql": "\nSELECT dia::timestamp AS time,\n       ventas::double precision AS \"Ventas\"\nFROM clinux_ventas_diarias\nWHERE $__timeFilter(dia::timestamp)\nORDER BY time\n",
+          "format": "time_series",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#28B9B3"
+          },
+          "unit": "currency:financial:$",
+          "custom": {},
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Detalle de clientes mayoristas",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 12,
+        "h": 11
+      },
+      "description": "Hasta 20 clientes por monto comprado neto en el período. Datos comerciales sensibles: compartir solo con usuarios autorizados.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_CLINUX}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_CLINUX}"
+          },
+          "rawSql": "\nSELECT nombre_cliente AS \"Cliente mayorista\",\n       SUM(comprobantes)::bigint AS \"Tickets\",\n       ROUND(SUM(ventas)::numeric, 2) AS \"Compras netas (ARS)\",\n       MAX(dia) AS \"Última compra\"\nFROM clinux_clientes_diarios\nWHERE mayorista = TRUE\n  AND $__timeFilter(dia::timestamp)\nGROUP BY cliente, nombre_cliente\nORDER BY \"Compras netas (ARS)\" DESC\nLIMIT 20\n",
+          "format": "table",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#28B9B3"
+          },
+          "unit": "none",
           "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Compras netas (ARS)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currency:financial:$"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Top 10 productos más vendidos · unidades",
+      "type": "barchart",
+      "gridPos": {
+        "x": 12,
+        "y": 26,
+        "w": 12,
+        "h": 11
+      },
+      "description": "Ranking por cantidad de unidades netas vendidas durante el período; las devoluciones restan.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_CLINUX}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_CLINUX}"
+          },
+          "rawSql": "\nSELECT producto AS \"Producto\",\n       ROUND(SUM(unidades)::numeric, 1) AS \"Unidades\"\nFROM clinux_productos_diarios\nWHERE $__timeFilter(dia::timestamp)\nGROUP BY item, producto\nHAVING SUM(unidades) > 0\nORDER BY \"Unidades\" DESC\nLIMIT 10\n",
+          "format": "table",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#28B9B3"
+          },
+          "unit": "none",
+          "custom": {},
+          "decimals": 1
         },
         "overrides": []
       },
@@ -399,210 +631,18 @@
         "orientation": "horizontal",
         "xField": "Producto",
         "showValue": "always",
-        "xTickLabelMaxLength": 40,
+        "xTickLabelMaxLength": 42,
         "xTickLabelSpacing": 0,
         "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
           "showLegend": false
         },
         "tooltip": {
           "mode": "single",
           "sort": "none"
         }
-      },
-      "description": "Unidades netas vendidas por artículo; con notas de crédito descontadas."
-    },
-    {
-      "id": 9,
-      "title": "Top clientes mayoristas",
-      "type": "table",
-      "gridPos": {
-        "x": 0,
-        "y": 22,
-        "w": 12,
-        "h": 9
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CLINUX}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CLINUX}"
-          },
-          "rawSql": "SELECT nombre_cliente AS \"Cliente\", COUNT(DISTINCT dia) AS \"Días con compras\",\n       SUM(comprobantes) AS \"Comprobantes\", ROUND(SUM(ventas)::numeric,2) AS \"Total ARS\"\n       FROM clinux_clientes_diarios\n       WHERE mayorista AND $__timeFilter(dia::timestamp)\n       GROUP BY cliente,nombre_cliente ORDER BY \"Total ARS\" DESC LIMIT 15",
-          "format": "table",
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {}
-        },
-        "overrides": []
-      },
-      "options": {},
-      "description": "Muestra información comercial sensible. Restringí acceso a quienes la necesiten."
-    },
-    {
-      "id": 10,
-      "title": "Stock por debajo del umbral configurable",
-      "type": "table",
-      "gridPos": {
-        "x": 12,
-        "y": 22,
-        "w": 12,
-        "h": 9
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CLINUX}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CLINUX}"
-          },
-          "rawSql": "SELECT producto AS \"Producto\", ROUND(existencia::numeric,2) AS \"Existencias\",\n       ROUND(umbral_alerta::numeric,2) AS \"Umbral de visualización\"\n       FROM clinux_stock WHERE bajo_umbral ORDER BY existencia ASC LIMIT 25",
-          "format": "table",
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {}
-        },
-        "overrides": []
-      },
-      "options": {},
-      "description": "El respaldo no trae stock mínimo cargado; se usa un umbral global configurable (ej.: 10). No es una recomendación de reposición."
-    },
-    {
-      "id": 11,
-      "title": "Facturación mayorista del último mes",
-      "type": "stat",
-      "gridPos": {
-        "x": 0,
-        "y": 31,
-        "w": 8,
-        "h": 4
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CLINUX}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CLINUX}"
-          },
-          "rawSql": "SELECT ventas_mayoristas_mes_actual AS \"Mayoristas\" FROM clinux_resumen LIMIT 1",
-          "format": "table",
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {},
-          "unit": "currency:financial:$",
-          "decimals": 0
-        },
-        "overrides": []
-      },
-      "options": {},
-      "description": "Último mes disponible; no sigue el filtro global de fechas."
-    },
-    {
-      "id": 12,
-      "title": "Cobertura de ganancia registrada",
-      "type": "stat",
-      "gridPos": {
-        "x": 8,
-        "y": 31,
-        "w": 8,
-        "h": 4
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CLINUX}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CLINUX}"
-          },
-          "rawSql": "SELECT cobertura_ganancia_pct AS \"Cobertura\" FROM clinux_resumen LIMIT 1",
-          "format": "table",
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {},
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "options": {},
-      "description": "Porcentaje de comprobantes del último mes con campo de ganancia registrado."
-    },
-    {
-      "id": 13,
-      "title": "Última actualización disponible",
-      "type": "table",
-      "gridPos": {
-        "x": 16,
-        "y": 31,
-        "w": 8,
-        "h": 4
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CLINUX}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CLINUX}"
-          },
-          "rawSql": "SELECT (fecha_actualizacion AT TIME ZONE 'America/Argentina/Cordoba') AS \"Sincronizado (Córdoba)\", (fecha_ultima_venta AT TIME ZONE 'America/Argentina/Cordoba') AS \"Última venta (Córdoba)\" FROM clinux_actualizacion LIMIT 1",
-          "format": "table",
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {}
-        },
-        "overrides": []
-      },
-      "options": {},
-      "description": "La actualización depende de cuándo Nacional Sistema genere el respaldo y de que GitHub Actions se ejecute."
+      }
     }
   ],
   "editable": true,

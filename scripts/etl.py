@@ -23,7 +23,7 @@ from .metrics import get_items, get_sales, monthly_growth_equivalent, mark_whole
 from .sql_dump import read_tables
 
 # Incrementar al cambiar reglas de cálculo, para reprocesar el mismo respaldo.
-ETL_RULES_VERSION = "v3-cliente-identificado-ticket-venta"
+ETL_RULES_VERSION = "v4-ganancias-por-canal"
 
 
 TABLES_DDL = [
@@ -39,6 +39,8 @@ TABLES_DDL = [
     """CREATE TABLE IF NOT EXISTS clinux_clientes_diarios (
         dia DATE NOT NULL, cliente TEXT, nombre_cliente TEXT, mayorista BOOLEAN,
         ventas NUMERIC(19,2), comprobantes BIGINT)""",
+    """ALTER TABLE clinux_clientes_diarios
+        ADD COLUMN IF NOT EXISTS ganancia_registrada NUMERIC(19,2)""",
     """CREATE TABLE IF NOT EXISTS clinux_canales_mensuales (
         mes DATE NOT NULL, canal TEXT, ventas NUMERIC(19,2), comprobantes BIGINT)""",
     """CREATE TABLE IF NOT EXISTS clinux_stock (
@@ -113,7 +115,9 @@ def create_indicators(path: Path) -> dict[str, pd.DataFrame]:
     product_daily.rename(columns={'nombre_producto':'producto'},inplace=True)
 
     client_daily = sales.groupby(['dia','cliente_id','nombre_cliente','mayorista'], as_index=False).agg(
-        ventas=('ventas_netas','sum'), comprobantes=('ticket_venta','sum'))
+        ventas=('ventas_netas','sum'),
+        comprobantes=('ticket_venta','sum'),
+        ganancia_registrada=('ganancia_registrada', lambda x: x.sum(min_count=1)))
     client_daily.rename(columns={'cliente_id':'cliente'},inplace=True)
     channel_monthly = sales.groupby(['mes_fecha','canal'],as_index=False).agg(
         ventas=('ventas_netas','sum'), comprobantes=('ticket_venta','sum'))
