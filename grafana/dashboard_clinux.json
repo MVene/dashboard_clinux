@@ -24,9 +24,9 @@
     }
   ],
   "id": null,
-  "uid": "clinux-gerencia",
-  "title": "Clinux | Crecimiento, Ventas y Mayoristas",
-  "description": "Panel gerencial sobre respaldo SQL de Nacional Sistema procesado por GitHub Actions",
+  "uid": "clinux-gerencia-v3",
+  "title": "Clinux | Gerencia: ventas y mayoristas (v3)",
+  "description": "Panel gerencial sobre respaldo SQL de Nacional Sistema procesado por GitHub Actions; importes nominales en ARS, ganancias parciales.",
   "tags": [
     "clinux",
     "ventas",
@@ -35,7 +35,7 @@
   ],
   "timezone": "America/Argentina/Cordoba",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 3,
   "refresh": "1h",
   "time": {
     "from": "now-180d",
@@ -49,7 +49,23 @@
     ]
   },
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "DS_CLINUX",
+        "label": "PostgreSQL Clinux",
+        "type": "datasource",
+        "query": "postgres",
+        "current": {
+          "text": "grafana-postgresql-datasource",
+          "value": "dg30kcghd1hj4c"
+        },
+        "refresh": 1,
+        "options": [],
+        "hide": 0,
+        "multi": false,
+        "includeAll": false
+      }
+    ]
   },
   "panels": [
     {
@@ -84,12 +100,13 @@
             "mode": "palette-classic"
           },
           "custom": {},
-          "unit": "currencyARS"
+          "unit": "currency:financial:$",
+          "decimals": 0
         },
         "overrides": []
       },
       "options": {},
-      "description": "Ventas netas del período seleccionado, incluyendo notas de crédito."
+      "description": "Ventas netas del período seleccionado, incluyendo notas de crédito. $ARS nominales."
     },
     {
       "id": 2,
@@ -123,7 +140,8 @@
             "mode": "palette-classic"
           },
           "custom": {},
-          "unit": "currencyARS"
+          "unit": "currency:financial:$",
+          "decimals": 0
         },
         "overrides": []
       },
@@ -132,7 +150,7 @@
     },
     {
       "id": 3,
-      "title": "Tickets del período",
+      "title": "Tickets de venta del período",
       "type": "stat",
       "gridPos": {
         "x": 12,
@@ -170,7 +188,7 @@
     },
     {
       "id": 4,
-      "title": "Crecimiento vs. mes anterior comparable",
+      "title": "Crecimiento último mes vs anterior*",
       "type": "stat",
       "gridPos": {
         "x": 18,
@@ -239,7 +257,8 @@
             "mode": "palette-classic"
           },
           "custom": {},
-          "unit": "currencyARS"
+          "unit": "currency:financial:$",
+          "decimals": 0
         },
         "overrides": []
       },
@@ -266,7 +285,7 @@
             "type": "postgres",
             "uid": "${DS_CLINUX}"
           },
-          "rawSql": "SELECT CASE WHEN mayorista THEN 'Mayoristas' ELSE 'Minoristas' END AS canal,\n        SUM(ventas) AS valor\n        FROM clinux_clientes_diarios WHERE $__timeFilter(dia::timestamp)\n        GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT COALESCE(SUM(ventas) FILTER (WHERE mayorista), 0) AS \"Mayoristas\",\n             COALESCE(SUM(ventas) FILTER (WHERE NOT mayorista), 0) AS \"Minoristas\"\n        FROM clinux_clientes_diarios WHERE $__timeFilter(dia::timestamp)",
           "format": "table",
           "editorMode": "code"
         }
@@ -299,7 +318,7 @@
           "values": false
         }
       },
-      "description": "Mayoristas según listas/grupos configurados. Validar la clasificación con el negocio."
+      "description": "Mayorista si el comprobante está asociado a un cliente identificado; CF o sin cliente es minorista. FC/FX no deciden por sí solas el canal. Las notas de crédito restan."
     },
     {
       "id": 7,
@@ -333,7 +352,8 @@
             "mode": "palette-classic"
           },
           "custom": {},
-          "unit": "currencyARS"
+          "unit": "currency:financial:$",
+          "decimals": 0
         },
         "overrides": []
       },
@@ -375,8 +395,21 @@
         },
         "overrides": []
       },
-      "options": {},
-      "description": "Cantidad neta de unidades por producto en período seleccionado."
+      "options": {
+        "orientation": "horizontal",
+        "xField": "Producto",
+        "showValue": "always",
+        "xTickLabelMaxLength": 40,
+        "xTickLabelSpacing": 0,
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "description": "Unidades netas vendidas por artículo; con notas de crédito descontadas."
     },
     {
       "id": 9,
@@ -486,7 +519,8 @@
             "mode": "palette-classic"
           },
           "custom": {},
-          "unit": "currencyARS"
+          "unit": "currency:financial:$",
+          "decimals": 0
         },
         "overrides": []
       },

@@ -49,9 +49,17 @@ def get_items(tables: dict[str, pd.DataFrame], sales: pd.DataFrame) -> pd.DataFr
     return items
 
 
-def mark_wholesale(sales: pd.DataFrame, wholesale_lists: list[str], wholesale_groups: list[str]) -> pd.DataFrame:
+def mark_wholesale(sales: pd.DataFrame, wholesale_lists=None, wholesale_groups=None) -> pd.DataFrame:
+    """Regla Clinux: cliente nominal = mayorista; CF o ausente = minorista.
+
+    Los parámetros obsoletos se aceptan para compatibilidad, pero se ignoran.
+    """
     out = sales.copy()
-    out['mayorista'] = out['lista'].isin(wholesale_lists) | out['grupo_cliente'].isin(wholesale_groups)
+    # La factura a nombre de un cliente identificado es mayorista.
+    # CF y los comprobantes sin cliente identificado son minoristas.
+    # FC/FX por sí solos no distinguen el canal en el respaldo de Clinux.
+    cliente = out['cliente'].fillna('').astype(str).str.strip().str.upper()
+    out['mayorista'] = ~cliente.isin({'', 'CF', 'CONSUMIDOR FINAL'})
     return out
 
 

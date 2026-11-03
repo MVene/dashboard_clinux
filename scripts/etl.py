@@ -19,8 +19,11 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 
 from .drive_sync import sync_latest
-from .metrics import get_items, get_sales, monthly_growth_equivalent
+from .metrics import get_items, get_sales, monthly_growth_equivalent, mark_wholesale
 from .sql_dump import read_tables
+
+# Incrementar al cambiar reglas de cálculo, para reprocesar el mismo respaldo.
+ETL_RULES_VERSION = "v3-cliente-identificado-ticket-venta"
 
 
 TABLES_DDL = [
@@ -83,21 +86,20 @@ def create_indicators(path: Path) -> dict[str, pd.DataFrame]:
         raise ValueError('No hay comprobantes válidos para calcular indicadores')
     sales['dia'] = sales['fecha'].dt.date
     sales['mes_fecha'] = sales['fecha'].dt.to_period('M').dt.to_timestamp().dt.date
-    sales['mayorista'] = (
-        sales['lista'].fillna('').astype(str).str.strip().str.upper().isin(
-            env_values('WHOLESALE_LISTS', 'LISTA EMPRESAS,SEIQ MAYORISTA'))
-        | sales['grupo_cliente'].fillna('').astype(str).str.strip().str.upper().isin(
-            env_values('WHOLESALE_GROUPS', 'EMPRESAS'))
-    )
+    # Regla comercial Clinux: nombre/ID de cliente distinto de CF -> mayorista;
+    # Consumidor Final o cliente ausente -> minorista.
+    # La regla no usa el tipo de comprobante: FC y FX aparecen en ambos canales.
+    sales = mark_wholesale(sales)
     sales['canal'] = sales['mayorista'].map({True: 'Mayoristas', False: 'Minoristas'})
+    sales['ticket_venta'] = sales['tipo'].isin(('FC', 'FN', 'FX')).astype(int)
     sales['cliente_id'] = sales['cliente'].fillna('').astype(str)
     sales['nombre_cliente'] = sales['nombre_cliente'].fillna('Sin identificar').astype(str)
 
     daily = sales.groupby('dia', as_index=False).agg(
-        ventas=('ventas_netas','sum'), comprobantes=('comprobante','size'),
+        ventas=('ventas_netas','sum'), comprobantes=('ticket_venta','sum'),
         ganancia_registrada=('ganancia_registrada','sum'))
     monthly = sales.groupby('mes_fecha', as_index=False).agg(
-        ventas=('ventas_netas','sum'), comprobantes=('comprobante','size'),
+        ventas=('ventas_netas','sum'), comprobantes=('ticket_venta','sum'),
         ganancia_registrada=('ganancia_registrada','sum'))
     monthly.rename(columns={'mes_fecha':'mes'}, inplace=True)
 
@@ -111,10 +113,10 @@ def create_indicators(path: Path) -> dict[str, pd.DataFrame]:
     product_daily.rename(columns={'nombre_producto':'producto'},inplace=True)
 
     client_daily = sales.groupby(['dia','cliente_id','nombre_cliente','mayorista'], as_index=False).agg(
-        ventas=('ventas_netas','sum'), comprobantes=('comprobante','size'))
+        ventas=('ventas_netas','sum'), comprobantes=('ticket_venta','sum'))
     client_daily.rename(columns={'cliente_id':'cliente'},inplace=True)
     channel_monthly = sales.groupby(['mes_fecha','canal'],as_index=False).agg(
-        ventas=('ventas_netas','sum'), comprobantes=('comprobante','size'))
+        ventas=('ventas_netas','sum'), comprobantes=('ticket_venta','sum'))
     channel_monthly.rename(columns={'mes_fecha':'mes'},inplace=True)
 
     # El respaldo de ejemplo no registra mínimos de stock en las columnas consultadas.
@@ -140,13 +142,13 @@ def create_indicators(path: Path) -> dict[str, pd.DataFrame]:
         'crecimiento_pct':equivalent['cambio'],
         'ganancia_mes_actual_registrada':float(smonth['ganancia_registrada'].sum()),
         'cobertura_ganancia_pct':float(smonth['ganancia_registrada'].notna().mean()*100),
-        'comprobantes_mes_actual':len(smonth),
+        'comprobantes_mes_actual':int(smonth['ticket_venta'].sum()),
         'ventas_mayoristas_mes_actual':float(smonth.loc[smonth['mayorista'],'ventas_netas'].sum()),
     }])
     # Datetime timezone: fecha venta es local sin timezone en el sistema; se explicita -03:00.
     kpis['fecha_ultima_venta'] = pd.to_datetime(kpis['fecha_ultima_venta']).dt.tz_localize('America/Argentina/Cordoba')
 
-    sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    sha = hashlib.sha256(ETL_RULES_VERSION.encode() + b"\n" + path.read_bytes()).hexdigest()
     last_sale = kpis.iloc[0]['fecha_ultima_venta']
     source = pd.DataFrame([{
         'fecha_actualizacion': datetime.now(timezone.utc),
