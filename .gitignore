@@ -1,6 +1,7 @@
-# Respaldo privado y credenciales: NUNCA subir a GitHub
+# Mantener fuera de Git respaldos y secretos (incluye credenciales temporales de Google)
 *.sql
 *.sql.gz
+*.sql.partial
 *.dump
 *.bak
 *.csv
@@ -9,6 +10,7 @@
 rclone.conf
 *.key
 *.pem
+gha-creds-*.json
 __pycache__/
 .pytest_cache/
 .venv/
