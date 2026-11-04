@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: clinux-datos
@@ -18,31 +19,44 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Obtener proyecto
+        uses: actions/checkout@v4
+
+      - name: Autenticar Google Cloud sin clave permanente
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: 'pip'
-      - name: Dependencias
+
+      - name: Instalar dependencias
         run: |
           python -m pip install -r requirements.txt
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq rclone
-      - name: Configurar Drive privado
+          python -m pip install 'google-api-python-client>=2,<3' 'google-auth>=2,<3'
+
+      - name: Descargar último respaldo con cuenta de servicio
         env:
-          RCLONE_CONFIG_BASE64: ${{ secrets.RCLONE_CONFIG_BASE64 }}
+          GCP_DRIVE_FOLDER_ID: ${{ vars.GCP_DRIVE_FOLDER_ID }}
         run: |
-          if [ -z "$RCLONE_CONFIG_BASE64" ]; then echo 'Falta RCLONE_CONFIG_BASE64'; exit 1; fi
-          mkdir -p "$HOME/.config/rclone"
-          chmod 700 "$HOME/.config/rclone"
-          printf '%s' "$RCLONE_CONFIG_BASE64" | base64 -d > "$HOME/.config/rclone/rclone.conf"
-          chmod 600 "$HOME/.config/rclone/rclone.conf"
-      - name: Procesar última copia y actualizar PostgreSQL
+          test -n "$GCP_DRIVE_FOLDER_ID" || { echo 'Falta GCP_DRIVE_FOLDER_ID'; exit 1; }
+          python -m scripts.drive_wif \
+            --folder-id "$GCP_DRIVE_FOLDER_ID" \
+            --output "$RUNNER_TEMP/clinux_respaldo.sql"
+
+      - name: Procesar respaldo y actualizar PostgreSQL
         env:
-          DRIVE_FOLDER: ${{ vars.DRIVE_FOLDER }}
-          WHOLESALE_LISTS: ${{ vars.WHOLESALE_LISTS }}
-          WHOLESALE_GROUPS: ${{ vars.WHOLESALE_GROUPS }}
-          STOCK_ALERT_THRESHOLD: ${{ vars.STOCK_ALERT_THRESHOLD }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          STOCK_ALERT_THRESHOLD: ${{ vars.STOCK_ALERT_THRESHOLD }}
         run: |
-          python -m scripts.etl
+          test -n "$DATABASE_URL" || { echo 'Falta DATABASE_URL'; exit 1; }
+          python -m scripts.etl --file "$RUNNER_TEMP/clinux_respaldo.sql"
+
+      - name: Borrar respaldo local temporal
+        if: always()
+        run: rm -f "$RUNNER_TEMP/clinux_respaldo.sql" "$RUNNER_TEMP/clinux_respaldo.sql.partial"
